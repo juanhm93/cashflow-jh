@@ -27,3 +27,7 @@ npm run lint
 ### Customize configuration
 
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+### Site
+
+[a link](https://practical-course-vue-jh.netlify.app/)
