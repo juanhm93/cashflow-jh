@@ -11,12 +11,14 @@
 				:total-amount="totalAmount"
 				:selected-date="specificDate"
 			>
-				<template #graphic> <Graphic :amounts="amounts" /> </template>
-				<template #action> <Action /> </template>
+				<template #graphic>
+					<Graphic :amounts="amounts" @select="select" />
+				</template>
+				<template #action> <Action @create="create" /> </template>
 			</Resume>
 		</template>
 		<template #movements>
-			<Movements :movements="movements" />
+			<Movements :movements="movements" @remove="remove" />
 		</template>
 	</Layout>
 	<!-- <div>Hola Mundo</div> -->
@@ -42,74 +44,62 @@ export default {
 	data() {
 		return {
 			amount: null,
-			totalAmount: 75000,
 			label: null,
 			labelTotal: "Ahorro total",
-			amounts: [100, 200, 500, 200, -400, -600, -300, 0, 300, 500],
+			// amounts: [100, 200, 500, 200, -400, -600, -300, 0, 300, 500],
 			specificDate: new Date(),
-			movements: [
-				{
-					id: 0,
-					title: "Movimiento 1",
-					description: "primer movimiento",
-					amount: 100,
-				},
-				{
-					id: 1,
-					title: "Movimiento 2",
-					description: "segundo movimiento",
-					amount: 200,
-				},
-				{
-					id: 2,
-					title: "Movimiento 3",
-					description: "tercero movimiento",
-					amount: 500,
-				},
-				{
-					id: 3,
-					title: "Movimiento 4",
-					description: "cuarto movimiento",
-					amount: 200,
-				},
-				{
-					id: 4,
-					title: "Movimiento 5",
-					description: "quinto movimiento",
-					amount: -400,
-				},
-				{
-					id: 5,
-					title: "Movimiento 6",
-					description: "sexto movimiento",
-					amount: -600,
-				},
-				{
-					id: 6,
-					title: "Movimiento 7",
-					description: "septimo movimiento",
-					amount: -300,
-				},
-				{
-					id: 7,
-					title: "Movimiento 8",
-					description: "octavo movimiento",
-					amount: 0,
-				},
-				{
-					id: 8,
-					title: "Movimiento 9",
-					description: "noveno movimiento",
-					amount: 300,
-				},
-				{
-					id: 9,
-					title: "Movimiento 10",
-					description: "decimo movimiento",
-					amount: 500,
-				},
-			],
+			movements: [],
 		};
+	},
+	computed: {
+		amounts() {
+			const lastDays = this.movements
+				.filter((m) => {
+					const today = new Date();
+					const oldDate = today.setDate(today.getDate() - 30);
+
+					return m.time > oldDate;
+				})
+				.map((m) => m.amount);
+
+			return lastDays.map((m, i) => {
+				const lastMovements = lastDays.slice(0, i + 1);
+
+				return lastMovements.reduce((suma, movement) => {
+					return suma + movement;
+				}, 0);
+			});
+		},
+		totalAmount() {
+			return this.movements.reduce((sum, m) => {
+				return sum + m.amount;
+			}, 0);
+		},
+	},
+	mounted() {
+		const movements = JSON.parse(localStorage.getItem("movements"));
+		if (Array.isArray(movements)) {
+			this.movements = movements?.map((m) => {
+				return { ...m, time: new Date(m.time) };
+			});
+		}
+	},
+	methods: {
+		create(movements) {
+			this.movements.push(movements);
+			this.save();
+		},
+		remove(id) {
+			const index = this.movements.findIndex((m) => m.id === id);
+			this.movements.splice(index, 1);
+			this.save();
+		},
+		save() {
+			localStorage.setItem("movements", JSON.stringify(this.movements));
+		},
+		select(amount) {
+			this.amount = amount;
+		},
 	},
 };
 </script>
